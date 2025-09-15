@@ -44,13 +44,31 @@ namespace Backend_2.Endpoints
                     Massage = "member added!"
                 };
             });
-            app.MapPut("v1/member/update{id}", (
+            app.MapPut("v1/member/update{id}", async (
                 [FromServices] LibraryDB db,
                 string guid,
                 MemberUpdateDto memberUpdateDto
             ) =>
             {
-                var search = "";
+                var search = await db.Members.FirstOrDefaultAsync(x => x.Guid == guid);
+                if (search == null)
+                {
+                    return new ComandResultDto
+                    { Successfull = false, Massage = "member not found" };
+
+                }
+                search.FirstName = memberUpdateDto.FirstName ?? search.FirstName;
+                search.LastName = memberUpdateDto.LastName ?? search.LastName;
+                search.Gender = memberUpdateDto.Gender;
+                await db.SaveChangesAsync();
+                return new ComandResultDto { Successfull = true, Massage = "book updated!" };
+
+            });
+            app.MapDelete("v1/member/remove{id}", (
+                
+            ) =>
+            {
+
             });
         }
     }
