@@ -66,6 +66,7 @@ app.UseCors(policy =>
 app.UseHttpsRedirection();
 
 app.MapBookEndPoints();
+app.MapMemberEndPoints();
 app.MapPost("v1/borrows/create", async Task<ComandResultDto> ([FromServices] LibraryDB db, [FromBody] BorrowAddDto dto) =>
 {
     var book = await db.Books.FirstOrDefaultAsync(x => x.Guid == dto.BookGuid) ?? throw new Exception("Book Not Found!");
@@ -101,5 +102,3 @@ app.MapPost("v1/borrows/create", async Task<ComandResultDto> ([FromServices] Lib
 });
 
 app.Run();
-
-

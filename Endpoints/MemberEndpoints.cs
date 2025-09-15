@@ -44,9 +44,9 @@ namespace Backend_2.Endpoints
                     Massage = "member added!"
                 };
             });
-            app.MapPut("v1/member/update{id}", async (
+            app.MapPut("v1/member/update{guid}", async (
                 [FromServices] LibraryDB db,
-                string guid,
+                [FromRoute] string guid,
                 MemberUpdateDto memberUpdateDto
             ) =>
             {
@@ -61,13 +61,22 @@ namespace Backend_2.Endpoints
                 search.LastName = memberUpdateDto.LastName ?? search.LastName;
                 search.Gender = memberUpdateDto.Gender;
                 await db.SaveChangesAsync();
-                return new ComandResultDto { Successfull = true, Massage = "book updated!" };
+                return new ComandResultDto { Successfull = true, Massage = "member updated!" };
 
             });
-            app.MapDelete("v1/member/remove{id}", (
-                
+            app.MapDelete("v1/member/remove{guid}", async (
+                [FromServices] LibraryDB db,
+                [FromRoute] string guid
             ) =>
             {
+                var x = await db.Members.FirstOrDefaultAsync(y => y.Guid == guid);
+                if (x == null)
+                {
+                    return new ComandResultDto { Successfull = false, Massage = "member not found" };
+                }
+                db.Members.Remove(x);
+                await db.SaveChangesAsync();
+                return new ComandResultDto { Successfull = true, Massage = "member removed!" };
 
             });
         }

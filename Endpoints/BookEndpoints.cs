@@ -46,7 +46,7 @@ namespace Backend_2.Endpoints
                     Massage = "book created!"
                 };
             });
-            app.MapPut("v1/books/update{id}", async ([FromServices] LibraryDB db, string guid, BookUpdateDto bookUpdateDto) =>
+            app.MapPut("v1/books/update{guid}", async ([FromServices] LibraryDB db,[FromRoute] string guid, BookUpdateDto bookUpdateDto) =>
             {
                 var simple = await db.Books.FirstOrDefaultAsync(x => x.Guid == guid);
                 if (simple == null)
@@ -63,9 +63,9 @@ namespace Backend_2.Endpoints
                 return new ComandResultDto { Successfull = true, Massage = "book updated!" };
 
             });
-            app.MapDelete("v1/books/remove{id}", async ([FromServices] LibraryDB db, [FromRoute] string id) =>
+            app.MapDelete("v1/books/remove{guid}", async ([FromServices] LibraryDB db, [FromRoute] string guid) =>
             {
-                var b = await db.Books.FirstOrDefaultAsync(x => x.Guid == id);
+                var b = await db.Books.FirstOrDefaultAsync(x => x.Guid == guid);
                 if (b == null)
                 {
                     return new ComandResultDto { Successfull = false, Massage = "book not found" };
