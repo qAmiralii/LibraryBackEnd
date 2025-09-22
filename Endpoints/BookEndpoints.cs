@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Backend.DBcontextes;
 using Backend.Entities;
@@ -26,27 +27,41 @@ namespace Backend_2.Endpoints
                     Writer = x.Writer
                 }).ToListAsync();
                 return result;
-            });
+            }).RequireAuthorization();
             app.MapPost("v1/books/create", async (
                 [FromServices] LibraryDB db,
+                [FromServices] ClaimsPrincipal claims,
                 [FromBody] BookAddDto bookAddDto) =>
             {
-                var book = new Book
+                var adminGuid = claims.Claims.FirstOrDefault(x => x.Type == "guidd")?.Value;
+                var admin = await db.Admins.FirstOrDefaultAsync(x => x.Guid == adminGuid);
+                if (admin != null)
                 {
-                    Title = !string.IsNullOrEmpty(bookAddDto.Title.Trim()) ? bookAddDto.Title : "بی عنوان",
-                    Writer = bookAddDto.Writer,
-                    Price = bookAddDto.Price,
-                    Publisher = bookAddDto.Publisher
-                };
-                await db.Books.AddAsync(book);
-                await db.SaveChangesAsync();
+
+
+                    var book = new Book
+                    {
+                        Title = !string.IsNullOrEmpty(bookAddDto.Title.Trim()) ? bookAddDto.Title : "بی عنوان",
+                        Writer = bookAddDto.Writer,
+                        Price = bookAddDto.Price,
+                        Publisher = bookAddDto.Publisher,
+                        Owner = admin
+                    };
+                    await db.Books.AddAsync(book);
+                    await db.SaveChangesAsync();
+                    return new ComandResultDto
+                    {
+                        Successfull = true,
+                        Massage = "book created!"
+                    };
+                }
                 return new ComandResultDto
                 {
-                    Successfull = true,
-                    Massage = "book created!"
+                    Successfull = false,
+                    Massage = "Unkown User!"
                 };
             });
-            app.MapPut("v1/books/update{guid}", async ([FromServices] LibraryDB db,[FromRoute] string guid, BookUpdateDto bookUpdateDto) =>
+            app.MapPut("v1/books/update{guid}", async ([FromServices] LibraryDB db, [FromRoute] string guid, BookUpdateDto bookUpdateDto) =>
             {
                 var simple = await db.Books.FirstOrDefaultAsync(x => x.Guid == guid);
                 if (simple == null)

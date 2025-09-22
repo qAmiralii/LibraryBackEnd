@@ -9,6 +9,7 @@ using Backend_2.DTOs.Books;
 using Backend_2.DTOs.Borrows;
 using Backend_2.DTOs.Common;
 using Backend_2.Endpoints;
+using Backend_2.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,16 +23,26 @@ builder.Services.AddOpenApi();
 builder.Services.AddCors();
 builder.Services.AddDbContext<LibraryDB>();
 
-// builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-//     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-//     .AddEnvironmentVariables();
-
-
-
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "novin.ir",
+            ValidAudience = "novin.ir",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("a33965cb3fc02a37092214d029ca2e7b9bc71ab89c307cb58542f943633ed5270e1793404d76d9ccbb14c45c55a2f534310c502f962b7ebb720c81ec7e6a7485"))
+        };
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// app.UseAuthentication();
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 if (app.Environment.IsDevelopment())
@@ -58,6 +69,16 @@ app.MapMemberEndPoints();
 
 app.MapPost("v1/auth/login", async Task<LoginResultDto> ([FromServices] LibraryDB db, [FromBody] LoginDto dto) =>
 {
+    if (!await db.Admins.AnyAsync())
+    {
+        await db.AddAsync(new Admin
+        {
+            Username = "admin",
+            Password = "admin",
+            Fullname = "amir ali"
+        });
+        await db.SaveChangesAsync();
+    }
     var admin = await db.Admins.FirstOrDefaultAsync(x => x.Username == dto.Username && x.Password == dto.Password);
 
     if (admin != null)
