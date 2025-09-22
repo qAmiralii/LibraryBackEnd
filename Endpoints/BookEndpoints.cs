@@ -30,10 +30,11 @@ namespace Backend_2.Endpoints
             }).RequireAuthorization();
             app.MapPost("v1/books/create", async (
                 [FromServices] LibraryDB db,
-                [FromServices] ClaimsPrincipal claims,
+                HttpContext context,
                 [FromBody] BookAddDto bookAddDto) =>
             {
-                var adminGuid = claims.Claims.FirstOrDefault(x => x.Type == "guidd")?.Value;
+                var user = context.User;
+                var adminGuid = user.Claims.FirstOrDefault(x => x.Type == "guidd")?.Value;
                 var admin = await db.Admins.FirstOrDefaultAsync(x => x.Guid == adminGuid);
                 if (admin != null)
                 {
@@ -60,7 +61,7 @@ namespace Backend_2.Endpoints
                     Successfull = false,
                     Massage = "Unkown User!"
                 };
-            });
+            }).RequireAuthorization();
             app.MapPut("v1/books/update{guid}", async ([FromServices] LibraryDB db, [FromRoute] string guid, BookUpdateDto bookUpdateDto) =>
             {
                 var simple = await db.Books.FirstOrDefaultAsync(x => x.Guid == guid);
