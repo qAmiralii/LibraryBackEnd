@@ -28,6 +28,23 @@ namespace Backend_2.Endpoints
                 }).ToListAsync();
                 return result;
             }).RequireAuthorization();
+
+            app.MapGet("v1/books/mylist", async ([FromServices] LibraryDB db, HttpContext context) =>
+            {
+                var user = context.User;
+                var adminGuid = user.Claims.FirstOrDefault(x => x.Type == "guidd")?.Value;
+                var admin = await db.Admins.FirstOrDefaultAsync(x => x.Guid == adminGuid);
+                var result = await db.Books.Where( x => x.Owner == admin).Select(x => new BookListDto
+                {
+                    Id = x.Guid,
+                    Title = x.Title,
+                    Price = x.Price,
+                    Publisher = x.Publisher,
+                    Writer = x.Writer
+                }).ToListAsync();
+                return result;
+            }).RequireAuthorization();
+
             app.MapPost("v1/books/create", async (
                 [FromServices] LibraryDB db,
                 HttpContext context,
